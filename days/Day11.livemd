@@ -1,0 +1,105 @@
+# Advent of Code 2024: Day 2
+
+```elixir
+Mix.install([
+  {:req, "~> 0.5.8"}
+])
+```
+
+## Data
+
+```elixir
+require Integer
+opts = [headers: [{"cookie", "session=#{System.fetch_env!("AOC_SESSION_COOKIE")}"}]]
+input = Req.get!("https://adventofcode.com/2024/day/11/input", opts).body
+test_input = ""
+```
+
+## Parser
+
+Parser Description
+
+```elixir
+defmodule Parser do
+  def parse input do
+    input
+  end
+end
+
+Parser.parse test_input
+```
+
+```elixir
+Parser.parse input
+```
+
+## Solution
+
+### Part 1
+
+Solution Part 1 Description
+
+### Part 2
+
+Solution Part 2 Description
+
+```elixir
+defmodule Day11 do
+  def part1 input do
+    input
+  end
+
+  def part2 input do 
+    input
+  end 
+end
+
+Day11.part1 test_input
+```
+
+## Testing
+
+```elixir
+ExUnit.start(auto_run: false, exclude: [:skip])
+
+defmodule Day11Specs do
+  @test_input test_input
+  @real_input input
+  use ExUnit.Case, async: false
+
+  test "part 1 should return x for the test input" do
+    assert Day11.part1(@test_input) === 0
+  end
+
+  @tag :skip
+  test "part 1 should return x for the real input" do
+    assert Day11.part1(@real_input) === 0
+  end
+  
+  test "part 2 should return x for the test input" do
+    assert Day11.part2(@test_input) === 0
+  end
+
+  @tag :skip
+  test "part 2 should return x for the real input" do
+    assert Day11.part2(@real_input) === 0
+  end
+  
+end
+
+ExUnit.run()
+```
+
+## Results
+
+### Part 1 Result
+
+```elixir
+Day11.part1(input)
+```
+
+### Part 2 Result
+
+```elixir
+Day11.part2(input)
+```
