@@ -2,7 +2,8 @@
 
 ```elixir
 Mix.install([
-  {:req, "~> 0.5.8"}
+  {:req, "~> 0.5.8"},
+  {:combinatorics, "~> 0.1.0"}
 ])
 ```
 
@@ -12,7 +13,13 @@ Mix.install([
 require Integer
 opts = [headers: [{"cookie", "session=#{System.fetch_env!("AOC_SESSION_COOKIE")}"}]]
 input = Req.get!("https://adventofcode.com/2024/day/2/input", opts).body
-test_input = ""
+test_input = "7 6 4 2 1
+1 2 7 8 9
+9 7 6 2 1
+1 3 2 4 5
+8 6 4 4 1
+1 3 6 7 9
+"
 ```
 
 ## Parser
@@ -22,7 +29,12 @@ Parser Description
 ```elixir
 defmodule Parser do
   def parse input do
-    input
+    String.split(input,["\n","\r\n"], trim: true)
+    |> Enum.map(&to_integer_list/1)
+  end
+
+  defp to_integer_list list do
+    String.split(list) |> Enum.map(&String.to_integer/1)
   end
 end
 
@@ -37,21 +49,56 @@ Parser.parse input
 
 ### Part 1
 
-Solution Part 1 Description
+The `is_safe` function is the key part of both solutions.  It reduces through a set of readings checking that the conditions are met all the way through.  We then simply run it for each set of readings and count how many are safe.
 
 ### Part 2
 
-Solution Part 2 Description
+For part 2 we brute force by gettings all the possible combinations of each set of readings and running them through the `is_safe` function: if any of them succeed then the readings are safe.
 
 ```elixir
 defmodule Day2 do
   def part1 input do
-    input
+    Parser.parse(input) |> Enum.count(&(is_safe(&1)))  
   end
 
   def part2 input do 
-    input
-  end 
+    Parser.parse(input) |> Enum.count(&(is_damped_safe(&1)))
+  end
+
+  defp is_damped_safe readings do
+    combinations(readings) |> Enum.any?(fn reading -> is_safe(reading) end)
+  end
+  
+  defp is_safe readings do
+    Enum.reduce(readings, { :unknown }, fn reading, acc -> 
+      case acc do
+        { :unsafe } -> 
+          { :unsafe }        
+        { :unknown } ->
+          { :safe, :unknown, reading }
+        { :safe, :unknown, x } when x > reading and abs(x-reading) < 4 ->
+          { :safe, :decreasing, reading}
+        { :safe, :unknown, x } when x < reading and abs(x-reading) < 4 ->
+          { :safe, :increasing, reading}        
+        { :safe, :decreasing, x } when x > reading and abs(x-reading) < 4 ->
+          { :safe, :decreasing, reading }
+        { :safe, :increasing, x } when x < reading and abs(x-reading) < 4 ->
+          { :safe, :increasing, reading }        
+        _ ->
+          { :unsafe }
+      end
+    end)
+    |> then(fn result -> 
+      case result do
+        {:unsafe} -> false
+        _ -> true        
+      end
+    end)
+  end
+
+  defp combinations list do
+    [ list | Combinatorics.n_combinations(length(list)-1, list) ]
+  end
 end
 
 Day2.part1 test_input
@@ -67,22 +114,20 @@ defmodule Day2Specs do
   @real_input input
   use ExUnit.Case, async: false
 
-  test "part 1 should return x for the test input" do
-    assert Day2.part1(@test_input) === 0
-  end
-
-  @tag :skip
-  test "part 1 should return x for the real input" do
-    assert Day2.part1(@real_input) === 0
+  test "part 1 should return 2 for the test input" do
+    assert Day2.part1(@test_input) === 2
   end
   
-  test "part 2 should return x for the test input" do
-    assert Day2.part2(@test_input) === 0
+  test "part 1 should return 422 for the real input" do
+    assert Day2.part1(@real_input) === 442
   end
-
-  @tag :skip
-  test "part 2 should return x for the real input" do
-    assert Day2.part2(@real_input) === 0
+  
+  test "part 2 should return 4 for the test input" do
+    assert Day2.part2(@test_input) === 4
+  end
+  
+  test "part 2 should return 493 for the real input" do
+    assert Day2.part2(@real_input) === 493
   end
   
 end
