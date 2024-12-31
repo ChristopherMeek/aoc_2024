@@ -68,7 +68,9 @@ defmodule Day2 do
   defp is_damped_safe readings do
     combinations(readings) |> Enum.any?(fn reading -> is_safe(reading) end)
   end
-  
+
+  # Reduce through the list keeping track of direction and working out if the list
+  # is still safe at each point.  Could be improved with a reduce_while
   defp is_safe readings do
     Enum.reduce(readings, { :unknown }, fn reading, acc -> 
       case acc do
