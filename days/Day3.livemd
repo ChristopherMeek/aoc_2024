@@ -1,4 +1,4 @@
-# Advent of Code 2024: Day 2
+# Advent of Code 2024: Day 3
 
 ```elixir
 Mix.install([
@@ -9,52 +9,60 @@ Mix.install([
 ## Data
 
 ```elixir
-require Integer
 opts = [headers: [{"cookie", "session=#{System.fetch_env!("AOC_SESSION_COOKIE")}"}]]
 input = Req.get!("https://adventofcode.com/2024/day/3/input", opts).body
-test_input = ""
+test_input = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))"
+part_2_test_input = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
 ```
 
-## Parser
+## Part 1
 
-Parser Description
-
-```elixir
-defmodule Parser do
-  def parse input do
-    input
-  end
-end
-
-Parser.parse test_input
-```
+Here we simply use a regex to parse out the operands of mul commands and perform the multiplication and sum as required.
 
 ```elixir
-Parser.parse input
-```
-
-## Solution
-
-### Part 1
-
-Solution Part 1 Description
-
-### Part 2
-
-Solution Part 2 Description
-
-```elixir
-defmodule Day3 do
-  def part1 input do
-    input
+defmodule Part1 do
+  def go input do
+    ~r/mul\((\d+),(\d+)\)/
+    |> Regex.scan(input)
+    |> Enum.map(&to_operands/1)
+    |> Enum.map(&Enum.product/1)
+    |> Enum.sum()  
   end
 
-  def part2 input do 
-    input
-  end 
+  defp to_operands([_|operands]), do: operands |> Enum.map(&String.to_integer/1)
 end
 
-Day3.part1 test_input
+Part1.go test_input
+```
+
+```elixir
+Part1.go input
+```
+
+## Part 2
+
+Similar to part 1 but we parse out ful operations with operands.  We include the do and don't command so that we know when to stop carrying out multiplications.  A more sophisticated version might use `NimbleParsec` to parse the string and treat don't commands like the start of comment blocks.  We use a reduce to go through the operations, keeping track of the do/dont status as we go and calculating the result when appropriate.
+
+```elixir
+defmodule Part2 do
+  def go input do
+    Regex.scan(~r/mul\((\d+),(\d+)\)|do\(\)|don't\(\)/, input)
+    |> Enum.map(&Part2.to_operations/1)
+    |> Enum.reduce({:do,0},&Part2.process/2)    
+    |> elem(1)
+  end
+
+  def to_operations([_,a,b]), do: { :mul , String.to_integer(a), String.to_integer(b) }
+  def to_operations(["don't()"]), do: :dont
+  def to_operations(["do()"]), do: :do 
+  
+  def process(:dont, {_,value}), do: {:dont, value }
+  def process(:do, {_,value}), do: {:do, value}
+  def process({:mul, a , b }, { :do, value }), do: {:do, value + a * b }
+  def process(_, acc), do: acc  
+end
+
+Part2.go part_2_test_input
 ```
 
 ## Testing
@@ -64,25 +72,25 @@ ExUnit.start(auto_run: false, exclude: [:skip])
 
 defmodule Day3Specs do
   @test_input test_input
+  @part_2_test_input part_2_test_input
   @real_input input
   use ExUnit.Case, async: false
 
   test "part 1 should return x for the test input" do
-    assert Day3.part1(@test_input) === 0
+    assert Part1.go(@test_input) === 161
   end
-
-  @tag :skip
+  
   test "part 1 should return x for the real input" do
-    assert Day3.part1(@real_input) === 0
+    assert Part1.go(@real_input) === 173731097
   end
   
   test "part 2 should return x for the test input" do
-    assert Day3.part2(@test_input) === 0
+    assert Part2.go(@part_2_test_input) === 48
   end
 
   @tag :skip
   test "part 2 should return x for the real input" do
-    assert Day3.part2(@real_input) === 0
+    assert Part2.go(@real_input) === 93729253
   end
   
 end
@@ -95,11 +103,11 @@ ExUnit.run()
 ### Part 1 Result
 
 ```elixir
-Day3.part1(input)
+Part1.go(input)
 ```
 
 ### Part 2 Result
 
 ```elixir
-Day3.part2(input)
+Part2.go(input)
 ```
